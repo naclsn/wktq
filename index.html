@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>wktq</title>
+    <link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css" />
+    <style>
+      body { font-size: initial; }
+      form { position: fixed; top: .5rem; right: calc((100vw - min(45rem, 90%)) / 2 + 1.5rem); }
+      #resultpage { background: var(--bg); padding: 2rem; padding-top: 0; }
+      span.title-deco::after { content: "\29c9"; float: right; }
+      h2, span.mw-editsection { visibility: hidden; font-size: 0; }
+      h3 { cursor: pointer; }
+      table.audiotable, table.audiotable * { border: 0; height: 1rem; margin: 0; padding: 0; vertical-align: baseline; }
+      table.audiotable audio { margin: 0 1rem 0 1rem; }
+      th { background: var(--accent-bg); }
+      td { background: var(--bg); }
+      .IPA { font-size: 110%; font-variant-ligatures: no-common-ligatures; }
+    </style>
+  </head>
+  <body>
+    <div id="resultpage"></div>
+    <form>
+      <input name="q" id="inputquery" />
+      <script>
+        document.body.onkeypress = e => '/' == e.key ? (e.preventDefault(), inputquery.focus()) : 0;
+        params = new URLSearchParams(location.search);
+        word = params.get('q');
+        base = word && 'https://en.wiktionary.org/w/api.php?origin=*&action=parse&format=json&page='+encodeURIComponent(word);
+        lang = params.get('s');
+        (function() {
+          var s = document.createElement(base ? 'select' : 'input');
+          s.setAttribute('name', 's');
+          s.setAttribute('id', 'langchoice');
+          document.currentScript.replaceWith(s);
+          if (base) {
+            resultpage.innerText = 'Loading...';
+            inputquery.setAttribute('value', word);
+            document.title = word+' - '+document.title;
+            fetch(base+'&prop=sections')
+              .then(r => r.json())
+              .then(r => {
+                if (r.error) {
+                  resultpage.innerText = r.error.info;
+                } else for (var it of r.parse.sections) if (1 == it.toclevel) {
+                  var o = s.appendChild(document.createElement('option'));
+                  o.setAttribute('value', o.textContent = it.line);
+                  if (lang == it.line || lang == it.index) {
+                    o.setAttribute('selected', true);
+                    fetch(base+'&prop=text&disabletoc&section='+it.index)
+                      .then(r => r.json())
+                      .then(r => {
+                        resultpage.innerHTML = r.parse.text['*']
+                          .replace(/\bstyle="/g, 'nostyle="')
+                          .replace(/<span nostyle="/g, '<span style="')
+                          .replace(/href="\/wiki\/([\w%]+)#([\w%]+)"/g, 'href="?q=$1&s=$2"')
+                          .replace(/href="\/wiki\/([^"]+)"/g, 'href="https://en.wiktionary.org/wiki/$1"')
+                          .replace(/<style/g, '<p hidden')
+                          .replace(/<\/style>/g, '</p>');
+                        var it = resultpage.firstChild.firstChild;
+                        while ('H3' != it.tagName) it = it.nextSibling;
+                        while (it) {
+                          let fl = it.insertAdjacentElement('afterend', document.createElement('section'));
+                          fl.setAttribute('hidden', 'hidden');
+                          it.onmouseup = _ => fl.hasAttribute('hidden') ? fl.removeAttribute('hidden') : fl.setAttribute('hidden', 'hidden');
+                          it.appendChild(document.createElement('span')).setAttribute('class', 'title-deco');
+                          it = fl.nextSibling;
+                          while (it && 'H3' != it.tagName) {
+                            var nx = it.nextSibling;
+                            fl.appendChild(it);
+                            it = nx;
+                          }
+                        }
+                      });
+                  }
+                }
+              });
+          }
+        })();
+      </script>
+      <button>Search</button>
+    </form>
+  </body>
+</html>
