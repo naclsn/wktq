@@ -3,82 +3,149 @@
   <head>
     <meta charset="utf-8" />
     <title>wktq</title>
-    <link rel="stylesheet" href="https://unpkg.com/simpledotcss/simple.min.css" />
     <style>
-      body { font-size: initial; }
-      form { position: fixed; top: .5rem; right: calc((100vw - min(45rem, 90%)) / 2 + 1.5rem); }
-      #resultpage { background: var(--bg); padding: 2rem; padding-top: 0; }
-      span.title-deco::after { content: "\29c9"; float: right; }
-      h2, span.mw-editsection { visibility: hidden; font-size: 0; }
-      h3 { cursor: pointer; }
-      table.audiotable, table.audiotable * { border: 0; height: 1rem; margin: 0; padding: 0; vertical-align: baseline; }
-      table.audiotable audio { margin: 0 1rem 0 1rem; }
-      th { background: var(--accent-bg); }
-      td { background: var(--bg); }
-      .IPA { font-size: 110%; font-variant-ligatures: no-common-ligatures; }
+      :root {
+          --bg: #1e2432;
+          --bd: #999;
+          --co: #ccc;
+          --ac: #6eb50f;
+      }
+      @media (max-width: 550px) {
+          #resultpage {
+              margin-top: 4rem;
+          }
+      }
+      @media (min-width: 770px) {
+          #resultpage {
+              max-width: 770px;
+              margin: auto;
+          }
+          :root { font-size: large; }
+      }
+      body {
+          font-family: sans-serif;
+          margin: 1rem;
+          color: var(--co);
+          background: var(--bg);
+      }
+      form {
+          position: fixed;
+          top: 1rem;
+          right: 1rem;
+      }
+      #inputquery {
+          max-width: 8rem;
+      }
+      h3 {
+          cursor: pointer;
+          border-color: var(--bd);
+          border-width: 1px;
+          border-bottom-style: solid;
+      }
+      h3:hover {
+          text-decoration: underline;
+      }
+      table {
+          border-collapse: collapse;
+      }
+      th, td {
+          border: solid 1px var(--bd);
+      }
+      th {
+          font-weight: bold;
+          color: var(--bd);
+      }
+      td {
+        padding: 0 .5rem;
+      }
+      strong, a {
+          color: var(--ac);
+      }
     </style>
   </head>
   <body>
     <div id="resultpage"></div>
     <form>
-      <input name="q" id="inputquery" />
-      <script>
-        document.body.onkeypress = e => '/' == e.key ? (e.preventDefault(), inputquery.focus()) : 0;
-        params = new URLSearchParams(location.search);
-        word = params.get('q');
-        base = word && 'https://en.wiktionary.org/w/api.php?origin=*&action=parse&format=json&page='+encodeURIComponent(word);
-        lang = params.get('s');
-        (function() {
-          var s = document.createElement(base ? 'select' : 'input');
-          s.setAttribute('name', 's');
-          s.setAttribute('id', 'langchoice');
-          document.currentScript.replaceWith(s);
-          if (base) {
-            resultpage.innerText = 'Loading...';
-            inputquery.setAttribute('value', word);
-            document.title = word+' - '+document.title;
-            fetch(base+'&prop=sections')
-              .then(r => r.json())
-              .then(r => {
-                if (r.error) {
-                  resultpage.innerText = r.error.info;
-                } else for (var it of r.parse.sections) if (1 == it.toclevel) {
-                  var o = s.appendChild(document.createElement('option'));
-                  o.setAttribute('value', o.textContent = it.line);
-                  if (lang == it.line || lang == it.index) {
-                    o.setAttribute('selected', true);
-                    fetch(base+'&prop=text&disabletoc&section='+it.index)
-                      .then(r => r.json())
-                      .then(r => {
-                        resultpage.innerHTML = r.parse.text['*']
-                          .replace(/\bstyle="/g, 'nostyle="')
-                          .replace(/<span nostyle="/g, '<span style="')
-                          .replace(/href="\/wiki\/([\w%]+)#([\w%]+)"/g, 'href="?q=$1&s=$2"')
-                          .replace(/href="\/wiki\/([^"]+)"/g, 'href="https://en.wiktionary.org/wiki/$1"')
-                          .replace(/<style/g, '<p hidden')
-                          .replace(/<\/style>/g, '</p>');
-                        var it = resultpage.firstChild.firstChild;
-                        while ('H3' != it.tagName) it = it.nextSibling;
-                        while (it) {
-                          let fl = it.insertAdjacentElement('afterend', document.createElement('section'));
-                          fl.setAttribute('hidden', 'hidden');
-                          it.onmouseup = _ => fl.hasAttribute('hidden') ? fl.removeAttribute('hidden') : fl.setAttribute('hidden', 'hidden');
-                          it.appendChild(document.createElement('span')).setAttribute('class', 'title-deco');
-                          it = fl.nextSibling;
-                          while (it && 'H3' != it.tagName) {
-                            var nx = it.nextSibling;
-                            fl.appendChild(it);
-                            it = nx;
-                          }
+      <input name="q" id="inputquery" autofocus />
+      <script>/*-*/(function() {
+        document.body.onkeypress = e => '/' == e.key ? (e.preventDefault(), inputquery.focus()) : '?' == e.key ? (e.preventDefault(), makenew.click()) : 0;
+        var params = new URLSearchParams(location.search)
+          , word = params.get('q')
+          , base = word && 'https://en.wiktionary.org/w/api.php?origin=*&action=parse&format=json&page='+encodeURIComponent(word)
+          , lang = params.get('s')
+          , skey = word+'#'+lang
+          , s = document.createElement(base ? 'select' : 'input');
+        s.setAttribute('name', 's');
+        document.currentScript.replaceWith(s);
+        if (base) {
+          inputquery.value = word;
+          document.title = word+' - '+document.title;
+          fetch(base+'&prop=sections')
+            .then(r => r.json())
+            .then(r => {
+              if (r.error) resultpage.textContent = r.error.info;
+              else for (var it of r.parse.sections) if (1 == it.toclevel) {
+                var o = s.appendChild(document.createElement('option'));
+                o.value = o.textContent = it.line;
+                if (lang == it.line || lang == it.index) {
+                  o.setAttribute('selected', true);
+                  // make sections unfoldable, even if page is saved to html
+                  var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "for (let a of resultpage.querySelectorAll('section')) a.previousSibling.onmouseup = _ => a.hasAttribute('hidden') ? a.removeAttribute('hidden') : a.setAttribute('hidden', 'hidden');";
+                  // use cached version
+                  if (resultpage.innerHTML = localStorage.getItem(skey)) hookunfold();
+                  else fetch(base+'&prop=text&disabletoc&section='+it.index)
+                    .then(r => r.json())
+                    .then(r => {
+                      // TODO: maybe modifications of the DOM sub-tree are more
+                      //       performant if done off-document (to be tested)
+                      resultpage.innerHTML = r.parse.text['*'].replace(/\n/g, '')
+                        // remove the wrapping .mw-parser-output
+                        .slice(r.parse.text['*'].indexOf('>')+1, r.parse.text['*'].lastIndexOf('<'))
+                        // fix the links
+                        .replace(/href="\/wiki\/([-\w%]+)#([-\w%]+)"/g, 'href="?q=$1&s=$2"')
+                        .replace(/href="\/wiki\/([^"]+)"/g, 'href="https://en.wiktionary.org/wiki/$1"');
+                      // remove unwanted
+                      for (var a of resultpage.querySelectorAll('style,.mw-editsection')) a.remove();
+                      for (var a of resultpage.querySelectorAll('*[class],*:not(span)[style]')) if ('AUDIO' != a.nodeName) {
+                        var ls = [];
+                        for (var n of a.attributes) if (-1 == ['rowspan', 'colspan', 'title'].indexOf(n.name)) ls.push(n.name);
+                        for (var n of ls) a.removeAttribute(n);
+                      }
+                      // remove until first h3
+                      var it = resultpage.firstChild;
+                      while ('H3' != it.nodeName) {
+                        var nx = it.nextSibling;
+                        it.remove();
+                        it = nx;
+                      }
+                      while (it) {
+                        // only keep actual title text
+                        it.appendChild(it.firstChild.firstChild);
+                        it.firstChild.remove();
+                        // add section after h3
+                        let fl = it.insertAdjacentElement('afterend', document.createElement('section'));
+                        // default-hide certain sections
+                        if (/\b(Alternative forms|Etymology(?! \d)|Pronunciation|Trivia|References|Further reading|Anagrams)\b/i.test(it.textContent)) fl.setAttribute('hidden', 'hidden');
+                        it = fl.nextSibling;
+                        // move all into section until next h3 or end
+                        while (it && 'H3' != it.nodeName) {
+                          var nx = it.nextSibling;
+                          if ('#comment' == it.nodeName) it.remove();
+                          else fl.appendChild(it);
+                          it = nx;
                         }
-                      });
-                  }
-                }
-              });
-          }
-        })();
-      </script>
+                      }
+                      localStorage.setItem(skey, resultpage.innerHTML);
+                      hookunfold();
+                    }); // fetch content
+                } // if found the section the user wants
+              } // for each top-level (lang) section
+            }); // fetch sections
+        } else s.value = lang || '';
+        setTimeout(s.onchange = _ => makenew.setAttribute('href', '?s='+s.value), 420);
+      })();</script>
       <button>Search</button>
+      <a href="?q=" target="_blank" id="makenew">New</a>
     </form>
   </body>
 </html>
