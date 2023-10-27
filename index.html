@@ -1,27 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>wktq</title>
     <style>
       :root {
-          --bg: #1e2432;
-          --bd: #999;
-          --co: #ccc;
+          font-size: large;
+          color-scheme: light;
+          --bg: #fff;
+          --re: #d2e8f3;
+          --bd: #737373;
+          --co: #131313;
+          --ti: #ff63f4;
           --ac: #6eb50f;
       }
-      @media (max-width: 550px) {
-          #resultpage {
-              margin-top: 4rem;
+      @media (prefers-color-scheme: dark) {
+          :root {
+              color-scheme: dark;
+              --bg: #252d40;
+              --re: #315161;
+              --bd: #6b6b6b;
+              --co: #ccc;
+              --ti: #bbb;
+              --ac: #6eb50f;
           }
       }
-      @media (min-width: 770px) {
-          #resultpage {
-              max-width: 770px;
-              margin: auto;
-          }
-          :root { font-size: large; }
-      }
+      @media print { form { visibility: hidden; } }
+      #resultpage { margin: auto; }
+      @media (max-width: 550px) { #resultpage { margin-top: 4rem; } form { left: 0rem; } }
+      @media (min-width: 790px) { #resultpage { margin-top: 2rem; max-width: 790px; } }
       body {
           font-family: sans-serif;
           margin: 1rem;
@@ -32,42 +40,37 @@
           position: fixed;
           top: 1rem;
           right: 1rem;
+          margin-left: 1rem;
       }
-      #inputquery {
-          max-width: 8rem;
+      input, select, button {
+        max-width: 4rem; min-width: 4rem;
+        height: 1.4rem;
+        box-sizing: border-box;
       }
+      #inputquery { max-width: 7rem; }
       h3 {
           cursor: pointer;
           border-color: var(--bd);
           border-width: 1px;
           border-bottom-style: solid;
       }
-      h3:hover {
-          text-decoration: underline;
-      }
-      table {
-          border-collapse: collapse;
-      }
-      th, td {
-          border: solid 1px var(--bd);
-      }
+      .tablewrap { overflow-x: auto; }
+      table { border-collapse: collapse; width: 100%; }
+      th, td { border: solid 1px var(--bd); }
       th {
           font-weight: bold;
-          color: var(--bd);
+          color: var(--ti);
+          background: var(--re);
       }
-      td {
-        padding: 0 .5rem;
-      }
-      strong, a {
-          color: var(--ac);
-      }
+      td { padding: 1px .5rem; }
+      strong, a { color: var(--ac); }
     </style>
   </head>
   <body>
     <div id="resultpage"></div>
     <form>
       <input name="q" id="inputquery" autofocus />
-      <script>/*-*/(function() {
+      <script>/*-*/;(function() {
         document.body.onkeypress = e => '/' == e.key ? (e.preventDefault(), inputquery.focus()) : '?' == e.key ? (e.preventDefault(), makenew.click()) : 0;
         var params = new URLSearchParams(location.search)
           , word = params.get('q')
@@ -96,23 +99,22 @@
                   else fetch(base+'&prop=text&disabletoc&section='+it.index)
                     .then(r => r.json())
                     .then(r => {
-                      // TODO: maybe modifications of the DOM sub-tree are more
-                      //       performant if done off-document (to be tested)
-                      resultpage.innerHTML = r.parse.text['*'].replace(/\n/g, '')
+                      var wip = document.createElement('div');
+                      wip.innerHTML = r.parse.text['*'].replace(/\n/g, '')
                         // remove the wrapping .mw-parser-output
                         .slice(r.parse.text['*'].indexOf('>')+1, r.parse.text['*'].lastIndexOf('<'))
                         // fix the links
                         .replace(/href="\/wiki\/([-\w%]+)#([-\w%]+)"/g, 'href="?q=$1&s=$2"')
                         .replace(/href="\/wiki\/([^"]+)"/g, 'href="https://en.wiktionary.org/wiki/$1"');
                       // remove unwanted
-                      for (var a of resultpage.querySelectorAll('style,.mw-editsection')) a.remove();
-                      for (var a of resultpage.querySelectorAll('*[class],*:not(span)[style]')) if ('AUDIO' != a.nodeName) {
+                      for (var a of wip.querySelectorAll('style,.mw-editsection')) a.remove();
+                      for (var a of wip.querySelectorAll('*[class],*:not(span)[style]')) if ('AUDIO' != a.nodeName) {
                         var ls = [];
                         for (var n of a.attributes) if (-1 == ['rowspan', 'colspan', 'title'].indexOf(n.name)) ls.push(n.name);
                         for (var n of ls) a.removeAttribute(n);
                       }
                       // remove until first h3
-                      var it = resultpage.firstChild;
+                      var it = wip.firstChild;
                       while ('H3' != it.nodeName) {
                         var nx = it.nextSibling;
                         it.remove();
@@ -130,12 +132,28 @@
                         // move all into section until next h3 or end
                         while (it && 'H3' != it.nodeName) {
                           var nx = it.nextSibling;
-                          if ('#comment' == it.nodeName) it.remove();
+                          if (!it.childNodes.length) it.remove();
                           else fl.appendChild(it);
                           it = nx;
                         }
+                        // don't keep an empty section
+                        if (!fl.childNodes.length) {
+                            fl.previousSibling.remove();
+                            fl.remove();
+                        }
                       }
-                      localStorage.setItem(skey, resultpage.innerHTML);
+                      // flatten spans
+                      for (var sp; sp = wip.querySelector('span:not([style])'); ) {
+                        for (var ch; ch = sp.firstChild; ) sp.parentNode.insertBefore(ch, sp);
+                        sp.remove();
+                      }
+                      // wrap tables for overflow
+                      for (var ta of wip.querySelectorAll('table')) {
+                        var tw = ta.insertAdjacentElement('afterend', document.createElement('div'));
+                        tw.setAttribute('class', 'tablewrap');
+                        tw.appendChild(ta);
+                      }
+                      localStorage.setItem(skey, resultpage.innerHTML = wip.innerHTML);
                       hookunfold();
                     }); // fetch content
                 } // if found the section the user wants
