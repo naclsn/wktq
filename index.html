@@ -90,7 +90,7 @@
               else for (var it of r.parse.sections) if (1 == it.toclevel) {
                 var o = s.appendChild(document.createElement('option'));
                 o.value = o.textContent = it.line;
-                if (lang == it.line || lang == it.index) {
+                if (lang == it.line) {
                   o.setAttribute('selected', true);
                   // make sections unfoldable, even if page is saved to html
                   var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "for (let a of resultpage.querySelectorAll('section')) a.previousSibling.onmouseup = _ => a.hasAttribute('hidden') ? a.removeAttribute('hidden') : a.setAttribute('hidden', 'hidden');";
@@ -153,7 +153,14 @@
                         tw.setAttribute('class', 'tablewrap');
                         tw.appendChild(ta);
                       }
-                      localStorage.setItem(skey, resultpage.innerHTML = wip.innerHTML);
+                      // cache / make room for it
+                      for (var rz = resultpage.innerHTML = wip.innerHTML, k = 0; k < 42; k++) {
+                        try { localStorage.setItem(skey, rz); } catch {
+                          localStorage.removeItem(localStorage.key(rz.length%localStorage.length));
+                          continue;
+                        }
+                        break;
+                      }
                       hookunfold();
                     }); // fetch content
                 } // if found the section the user wants
