@@ -107,7 +107,7 @@
                         .replace(/href="\/wiki\/([-\w%]+)#([-\w%]+)"/g, 'href="?q=$1&s=$2"')
                         .replace(/href="\/wiki\/([^"]+)"/g, 'href="https://en.wiktionary.org/wiki/$1"');
                       // remove unwanted
-                      for (var a of wip.querySelectorAll('style,.mw-editsection')) a.remove();
+                      for (var a of wip.querySelectorAll('style,.mw-editsection,.mw-empty-elt')) a.remove();
                       for (var a of wip.querySelectorAll('*[class],*:not(span)[style]')) if ('AUDIO' != a.nodeName) {
                         var ls = [];
                         for (var n of a.attributes) if (-1 == ['rowspan', 'colspan', 'title'].indexOf(n.name)) ls.push(n.name);
