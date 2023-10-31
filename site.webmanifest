@@ -2,7 +2,7 @@
   "name": "Wiktionary Query",
   "short_name": "wktq",
   "description": "need to make a short description here",
-  "start_url": "/",
+  "start_url": "index.html",
   "icons": [
     {
       "src": "largicon.png",
@@ -12,5 +12,5 @@
   ],
   "theme_color": "#6eb50f",
   "background_color": "#252d40",
-  "display": "standalone"
+  "display": "browser"
 }
