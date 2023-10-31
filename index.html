@@ -71,9 +71,19 @@
   <body>
     <div id="resultpage"></div>
     <form>
-      <input name="q" id="inputquery" autofocus />
+      <input name="q" id="inputquery" autofocus list="pscomplete" />
+      <datalist id="pscomplete"></datalist>
       <script>/*-*/;(function() {
-        document.body.onkeypress = e => '/' == e.key ? (e.preventDefault(), inputquery.focus()) : '?' == e.key ? (e.preventDefault(), makenew.click()) : 0;
+        inputquery.oninput = _ => inputquery.value.length <3 ? pscomplete.innerHTML = '' :
+          fetch('https://en.wiktionary.org/w/api.php?origin=*&action=query&format=json&generator=prefixsearch&gpslimit=6&gpssearch='+encodeURIComponent(inputquery.value))
+            .then(r => r.json())
+            .then(r => {
+              if (r.query) for (var id in r.query.pages) {
+                var it = r.query.pages[id];
+                while (pscomplete.childElementCount < it.index) pscomplete.appendChild(document.createElement('option'));
+                pscomplete.children[it.index-1].value = it.title;
+              } else pscomplete.innerHTML = '';
+            });
         var params = new URLSearchParams(location.search)
           , word = params.get('q')
           , base = word && 'https://en.wiktionary.org/w/api.php?origin=*&action=parse&format=json&page='+encodeURIComponent(word)
@@ -94,8 +104,8 @@
                 o.value = o.textContent = it.line;
                 if (lang == it.line) {
                   o.setAttribute('selected', true);
-                  // make sections unfoldable, even if page is saved to html
-                  var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "for (let a of resultpage.querySelectorAll('section')) a.previousSibling.onmouseup = _ => a.hasAttribute('hidden') ? a.removeAttribute('hidden') : a.setAttribute('hidden', 'hidden');";
+                  // hook keyboard shortcuts and make sections unfoldable, even when page is saved to html
+                  var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "var keymap={'/':_=>!inputquery.focus(),'?':_=>!makenew.click(),Escape:_=>inputquery.blur(),j:f=>f&&scrollBy(0,72),k:f=>f&&scrollBy(0,-72),f:f=>f&&scrollBy(0,innerHeight),b:f=>f&&scrollBy(0,-innerHeight),d:f=>f&&scrollBy(0,innerHeight/2),u:f=>f&&scrollBy(0,-innerHeight/2),g:f=>f&&scroll(0,0),G:f=>f&&scroll(0,742945),_cursectit:_=>{var t=document.activeElement;if('#'!=t.getAttribute('href')){while(t&&'SECTION'!=t.tagName)t=t.parentNode;t=(t||resultpage.querySelector('section')).previousSibling}return t},'*':_=>(keymap._cursectit().nextSibling.nextSibling||resultpage.firstChild).focus(),'#':_=>(keymap._cursectit().previousSibling||resultpage.lastChild).previousSibling.focus()};document.body.onkeydown=e=>keymap[e.key]&&keymap[e.key](inputquery!=e.target)?e.preventDefault():0;for(let a of resultpage.querySelectorAll('section'))a.previousSibling.onclick=e=>(e.preventDefault(),e.target.scrollIntoView&&setTimeout(_=>e.target.scrollIntoView(!0),42),a.hasAttribute('hidden')?a.removeAttribute('hidden'):a.setAttribute('hidden','hidden'))";
                   // use cached version
                   if (resultpage.innerHTML = localStorage.getItem(skey)) hookunfold();
                   else fetch(base+'&prop=text&disabletoc&section='+it.index)
@@ -128,6 +138,10 @@
                         it.firstChild.remove();
                         // add section after h3
                         let fl = it.insertAdjacentElement('afterend', document.createElement('section'));
+                        // put h3 in a
+                        let at = it.insertAdjacentElement('beforebegin', document.createElement('a'));
+                        at.appendChild(it);
+                        at.setAttribute('href', '#');
                         // default-hide certain sections
                         if (/\b(Alternative forms|Etymology(?! \d)|Pronunciation|Trivia|References|Further reading|Anagrams)\b/i.test(it.textContent)) fl.setAttribute('hidden', 'hidden');
                         it = fl.nextSibling;
@@ -171,7 +185,7 @@
         } else s.value = lang || '';
         setTimeout(s.onchange = _ => makenew.setAttribute('href', '?s='+s.value), 420);
       })();</script>
-      <button>Search</button>
+      <button type="submit">Search</button>
       <a href="?q=" target="_blank" id="makenew">New</a>
     </form>
   </body>
