@@ -1,7 +1,7 @@
 {
   "name": "Wiktionary Query",
   "short_name": "wktq",
-  "description": "need to make a short description here",
+  "description": "This is literally just a call to the Wiktionary API-",
   "start_url": "index.html",
   "icons": [
     {

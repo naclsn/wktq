@@ -7,42 +7,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>wktq</title>
     <style>
-      :root {
-          font-size: large;
-          color-scheme: light;
-          --bg: #fff;
-          --re: #d2e8f3;
-          --bd: #737373;
-          --co: #131313;
-          --ti: #ff63f4;
-          --ac: #6eb50f;
+      body.light {
+        color-scheme: light;
+        --bg: #ffffff;
+        --re: #d2e8f3;
+        --bd: #737373;
+        --co: #131313;
+        --ti: #ff63f4;
+        --ac: #6eb50f;
       }
-      @media (prefers-color-scheme: dark) {
-          :root {
-              color-scheme: dark;
-              --bg: #252d40;
-              --re: #315161;
-              --bd: #6b6b6b;
-              --co: #ccc;
-              --ti: #bbb;
-              --ac: #6eb50f;
-          }
+      body.dark {
+        color-scheme: dark;
+        --bg: #252d40;
+        --re: #315161;
+        --bd: #6b6b6b;
+        --co: #cccccc;
+        --ti: #bbbbbb;
+        --ac: #6eb50f;
       }
+      :root { font-size: large; }
       @media print { form { visibility: hidden; } }
       #resultpage { margin: auto; }
       @media (max-width: 550px) { #resultpage { margin-top: 4rem; } form { left: 0rem; } }
       @media (min-width: 790px) { #resultpage { margin-top: 2rem; max-width: 790px; } }
       body {
-          font-family: sans-serif;
-          margin: 1rem;
-          color: var(--co);
-          background: var(--bg);
+        font-family: sans-serif;
+        margin: 1rem;
+        color: var(--co);
+        background: var(--bg);
       }
       form {
-          position: fixed;
-          top: 1rem;
-          right: 1rem;
-          margin-left: 1rem;
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        margin-left: 1rem;
       }
       input, select, button {
         max-width: 4rem; min-width: 4rem;
@@ -50,30 +48,36 @@
         box-sizing: border-box;
       }
       #inputquery { max-width: 7rem; }
+      #themeswitch {
+        min-width: unset; width: 1.4rem;
+        border-radius: 50%;
+        border-width: 1px;
+      }
       h3 {
-          cursor: pointer;
-          border-color: var(--bd);
-          border-width: 1px;
-          border-bottom-style: solid;
+        cursor: pointer;
+        border-color: var(--bd);
+        border-width: 1px;
+        border-bottom-style: solid;
       }
       .tablewrap { overflow-x: auto; }
       table { border-collapse: collapse; width: 100%; }
       th, td { border: solid 1px var(--bd); }
       th {
-          font-weight: bold;
-          color: var(--ti);
-          background: var(--re);
+        font-weight: bold;
+        color: var(--ti);
+        background: var(--re);
       }
       td { padding: 1px .5rem; }
       strong, a { color: var(--ac); }
     </style>
   </head>
   <body>
-    <div id="resultpage"></div>
+    <div id="resultpage">Hi :3<br />This is an empty home page, make a search for a word!<br />Example: <a href='?q=ciastko&s=Polish'>ciastko#Polish</a></div>
     <form>
-      <input name="q" id="inputquery" autofocus list="pscomplete" />
+      <input name="q" id="inputquery" autofocus list="pscomplete" placeholder="search for word" />
       <datalist id="pscomplete"></datalist>
       <script>/*-*/;(function() {
+        document.body.setAttribute('class', localStorage.getItem('theme') || (localStorage.setItem('theme', matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light'), localStorage.getItem('theme')));
         inputquery.oninput = _ => inputquery.value.length <3 ? pscomplete.innerHTML = '' :
           fetch('https://en.wiktionary.org/w/api.php?origin=*&action=query&format=json&generator=prefixsearch&gpslimit=6&gpssearch='+encodeURIComponent(inputquery.value))
             .then(r => r.json())
@@ -91,13 +95,15 @@
           , skey = word+'#'+lang
           , s = document.createElement(base ? 'select' : 'input');
         s.setAttribute('name', 's');
+        s.setAttribute('placeholder', 'in lang');
         document.currentScript.replaceWith(s);
         if (base) {
-          inputquery.value = word;
+          resultpage.textContent = inputquery.value = word;
           document.title = word+' - '+document.title;
           fetch(base+'&prop=sections')
             .then(r => r.json())
             .then(r => {
+              resultpage.textContent = 'Select a language';
               if (r.error) resultpage.textContent = r.error.info;
               else for (var it of r.parse.sections) if (1 == it.toclevel) {
                 var o = s.appendChild(document.createElement('option'));
@@ -105,7 +111,7 @@
                 if (lang == it.line) {
                   o.setAttribute('selected', true);
                   // hook keyboard shortcuts and make sections unfoldable, even when page is saved to html
-                  var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "var keymap={'/':_=>!inputquery.focus(),'?':_=>!makenew.click(),Escape:_=>inputquery.blur(),j:f=>f&&scrollBy(0,72),k:f=>f&&scrollBy(0,-72),f:f=>f&&scrollBy(0,innerHeight),b:f=>f&&scrollBy(0,-innerHeight),d:f=>f&&scrollBy(0,innerHeight/2),u:f=>f&&scrollBy(0,-innerHeight/2),g:f=>f&&scroll(0,0),G:f=>f&&scroll(0,742945),_cursectit:_=>{var t=document.activeElement;if('#'!=t.getAttribute('href')){while(t&&'SECTION'!=t.tagName)t=t.parentNode;t=(t||resultpage.querySelector('section')).previousSibling}return t},'*':_=>(keymap._cursectit().nextSibling.nextSibling||resultpage.firstChild).focus(),'#':_=>(keymap._cursectit().previousSibling||resultpage.lastChild).previousSibling.focus()};document.body.onkeydown=e=>keymap[e.key]&&keymap[e.key](inputquery!=e.target)?e.preventDefault():0;for(let a of resultpage.querySelectorAll('section'))a.previousSibling.onclick=e=>(e.preventDefault(),e.target.scrollIntoView&&setTimeout(_=>e.target.scrollIntoView(!0),42),a.hasAttribute('hidden')?a.removeAttribute('hidden'):a.setAttribute('hidden','hidden'))";
+                  var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "var keymap={'/':_=>!inputquery.focus(),'?':_=>open(location),Escape:_=>inputquery.blur(),j:f=>f&&scrollBy(0,72),k:f=>f&&scrollBy(0,-72),f:f=>f&&scrollBy(0,innerHeight),b:f=>f&&scrollBy(0,-innerHeight),d:f=>f&&scrollBy(0,innerHeight/2),u:f=>f&&scrollBy(0,-innerHeight/2),g:f=>f&&scroll(0,0),G:f=>f&&scroll(0,742945),_cursectit:_=>{var t=document.activeElement;if('#'!=t.getAttribute('href')){while(t&&'SECTION'!=t.tagName)t=t.parentNode;t=(t||resultpage.querySelector('section')).previousSibling}return t},'*':_=>(keymap._cursectit().nextSibling.nextSibling||resultpage.firstChild).focus(),'#':_=>(keymap._cursectit().previousSibling||resultpage.lastChild).previousSibling.focus()};document.body.onkeydown=e=>keymap[e.key]&&keymap[e.key](inputquery!=e.target)?e.preventDefault():0;for(let a of resultpage.querySelectorAll('section'))a.previousSibling.onclick=e=>(e.preventDefault(),e.target.scrollIntoView&&setTimeout(_=>e.target.scrollIntoView(!0),42),a.hasAttribute('hidden')?a.removeAttribute('hidden'):a.setAttribute('hidden','hidden'))";
                   // use cached version
                   if (resultpage.innerHTML = localStorage.getItem(skey)) hookunfold();
                   else fetch(base+'&prop=text&disabletoc&section='+it.index)
@@ -172,7 +178,8 @@
                       // cache / make room for it
                       for (var rz = resultpage.innerHTML = wip.innerHTML, k = 0; k < 42; k++) {
                         try { localStorage.setItem(skey, rz); } catch {
-                          localStorage.removeItem(localStorage.key(rz.length%localStorage.length));
+                          var k = localStorage.key(Math.random()*localStorage.length);
+                          if (-1 != k.indexOf('#')) localStorage.removeItem(k);
                           continue;
                         }
                         break;
@@ -183,10 +190,9 @@
               } // for each top-level (lang) section
             }); // fetch sections
         } else s.value = lang || '';
-        setTimeout(s.onchange = _ => makenew.setAttribute('href', '?s='+s.value), 420);
       })();</script>
       <button type="submit">Search</button>
-      <a href="?q=" target="_blank" id="makenew">New</a>
+      <button type="button" id="themeswitch" title="v10" onclick="document.body.setAttribute('class', 'light' == document.body.getAttribute('class') ? 'dark' : 'light')">&#9788;</button>
     </form>
   </body>
 </html>
