@@ -28,7 +28,7 @@
       :root { font-size: large; }
       @media print { form { visibility: hidden; } }
       #resultpage { margin: auto; }
-      @media (max-width: 550px) { #resultpage { margin-top: 4rem; } form { left: 0rem; } }
+      @media (max-width: 550px) { #resultpage { margin-top: 4rem; } form { left: 0; } }
       @media (min-width: 790px) { #resultpage { margin-top: 2rem; max-width: 790px; } }
       body {
         font-family: sans-serif;
@@ -52,6 +52,8 @@
         min-width: unset; width: 1.4rem;
         border-radius: 50%;
         border-width: 1px;
+        padding: 0;
+        line-height: 0;
       }
       h3 {
         cursor: pointer;
@@ -70,11 +72,12 @@
       td { padding: 1px .5rem; }
       strong, a { color: var(--ac); }
     </style>
+    <script>_replaceElement=(me,wh,keepattrs)=>{me.insertAdjacentElement('afterend',wh);for(var n of keepattrs||[])wh.setAttribute(n,me.getAttribute(n));me.remove()}</script>
   </head>
   <body>
     <div id="resultpage">Hi :3<br />This is an empty home page, make a search for a word!<br />Example: <a href='?q=ciastko&s=Polish'>ciastko#Polish</a></div>
     <form>
-      <input name="q" id="inputquery" autofocus list="pscomplete" placeholder="search for word" />
+      <input name="q" id="inputquery" placeholder="search for word" autofocus list="pscomplete" />
       <datalist id="pscomplete"></datalist>
       <script>/*-*/;(function() {
         document.body.setAttribute('class', localStorage.getItem('theme') || (localStorage.setItem('theme', matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? 'dark' : 'light'), localStorage.getItem('theme')));
@@ -95,8 +98,11 @@
           , skey = word+'#'+lang
           , s = document.createElement(base ? 'select' : 'input');
         s.setAttribute('name', 's');
+        s.setAttribute('id', 'langselect');
         s.setAttribute('placeholder', 'in lang');
-        document.currentScript.replaceWith(s);
+        _replaceElement(document.currentScript, s);
+        // hook keyboard shortcuts and make sections unfoldable, even when page is saved to html
+        var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "var keymap={'/':_=>!inputquery.focus(),'?':_=>open(location),Escape:_=>resultpage.querySelector('section:not([hidden])').previousSibling.focus(),j:f=>f&&scrollBy(0,72),k:f=>f&&scrollBy(0,-72),f:f=>f&&scrollBy(0,innerHeight),b:f=>f&&scrollBy(0,-innerHeight),d:f=>f&&scrollBy(0,innerHeight/2),u:f=>f&&scrollBy(0,-innerHeight/2),g:f=>f&&scroll(0,0),G:f=>f&&scroll(0,742945),_cursectit:_=>{var t=document.activeElement;if('#'!=t.getAttribute('href')){while(t&&'SECTION'!=t.tagName)t=t.parentNode;t=(t||resultpage.querySelector('section')).previousSibling}return t},'*':_=>(keymap._cursectit().nextSibling.nextSibling||resultpage.firstChild).focus(),'#':_=>(keymap._cursectit().previousSibling||resultpage.lastChild).previousSibling.focus(),z:f=>f&&document.activeElement.scrollIntoView({block:'center'}),t:f=>f&&document.activeElement.scrollIntoView()};document.body.onkeydown=e=>keymap[e.key]&&keymap[e.key](inputquery!=e.target)?e.preventDefault():0;for(let a of resultpage.querySelectorAll('section'))a.previousSibling.onclick=e=>(e.preventDefault(),a.hasAttribute('hidden')?a.removeAttribute('hidden'):a.setAttribute('hidden','hidden'));langselect.onkeydown=e=>({Delete:1,Backspace:1})[e.key]&&(_replaceElement(langselect,document.createElement('input'),['name','id','placeholder']),langselect.focus())";
         if (base) {
           resultpage.textContent = inputquery.value = word;
           document.title = word+' - '+document.title;
@@ -110,8 +116,6 @@
                 o.value = o.textContent = it.line;
                 if (lang == it.line) {
                   o.setAttribute('selected', true);
-                  // hook keyboard shortcuts and make sections unfoldable, even when page is saved to html
-                  var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "var keymap={'/':_=>!inputquery.focus(),'?':_=>open(location),Escape:_=>inputquery.blur(),j:f=>f&&scrollBy(0,72),k:f=>f&&scrollBy(0,-72),f:f=>f&&scrollBy(0,innerHeight),b:f=>f&&scrollBy(0,-innerHeight),d:f=>f&&scrollBy(0,innerHeight/2),u:f=>f&&scrollBy(0,-innerHeight/2),g:f=>f&&scroll(0,0),G:f=>f&&scroll(0,742945),_cursectit:_=>{var t=document.activeElement;if('#'!=t.getAttribute('href')){while(t&&'SECTION'!=t.tagName)t=t.parentNode;t=(t||resultpage.querySelector('section')).previousSibling}return t},'*':_=>(keymap._cursectit().nextSibling.nextSibling||resultpage.firstChild).focus(),'#':_=>(keymap._cursectit().previousSibling||resultpage.lastChild).previousSibling.focus()};document.body.onkeydown=e=>keymap[e.key]&&keymap[e.key](inputquery!=e.target)?e.preventDefault():0;for(let a of resultpage.querySelectorAll('section'))a.previousSibling.onclick=e=>(e.preventDefault(),e.target.scrollIntoView&&setTimeout(_=>e.target.scrollIntoView(!0),42),a.hasAttribute('hidden')?a.removeAttribute('hidden'):a.setAttribute('hidden','hidden'))";
                   // use cached version
                   if (resultpage.innerHTML = localStorage.getItem(skey)) hookunfold();
                   else fetch(base+'&prop=text&disabletoc&section='+it.index)
@@ -189,10 +193,10 @@
                 } // if found the section the user wants
               } // for each top-level (lang) section
             }); // fetch sections
-        } else s.value = lang || '';
+        } else hookunfold(s.value = lang || '');
       })();</script>
       <button type="submit">Search</button>
-      <button type="button" id="themeswitch" title="v10" onclick="document.body.setAttribute('class', 'light' == document.body.getAttribute('class') ? 'dark' : 'light')">&#9788;</button>
+      <button type="button" id="themeswitch" title="v11" onclick="document.body.setAttribute('class', (localStorage.setItem('theme', 'light' == document.body.getAttribute('class') ? 'dark' : 'light'), localStorage.getItem('theme')))">&#9788;</button>
     </form>
   </body>
 </html>
