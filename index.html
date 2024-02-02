@@ -102,9 +102,10 @@
         s.setAttribute('placeholder', 'in lang');
         _replaceElement(document.currentScript, s);
         // hook keyboard shortcuts and make sections unfoldable, even when page is saved to html
-        var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "var keymap={'/':_=>!inputquery.focus(),'?':_=>open(location),Escape:_=>resultpage.querySelector('section:not([hidden])').previousSibling.focus(),j:f=>f&&scrollBy(0,72),k:f=>f&&scrollBy(0,-72),f:f=>f&&scrollBy(0,innerHeight),b:f=>f&&scrollBy(0,-innerHeight),d:f=>f&&scrollBy(0,innerHeight/2),u:f=>f&&scrollBy(0,-innerHeight/2),g:f=>f&&scroll(0,0),G:f=>f&&scroll(0,742945),_cursectit:_=>{var t=document.activeElement;if('#'!=t.getAttribute('href')){while(t&&'SECTION'!=t.tagName)t=t.parentNode;t=(t||resultpage.querySelector('section')).previousSibling}return t},'*':_=>(keymap._cursectit().nextSibling.nextSibling||resultpage.firstChild).focus(),'#':_=>(keymap._cursectit().previousSibling||resultpage.lastChild).previousSibling.focus(),z:f=>f&&document.activeElement.scrollIntoView({block:'center'}),t:f=>f&&document.activeElement.scrollIntoView()};document.body.onkeydown=e=>keymap[e.key]&&keymap[e.key](inputquery!=e.target)?e.preventDefault():0;for(let a of resultpage.querySelectorAll('section'))a.previousSibling.onclick=e=>(e.preventDefault(),a.hasAttribute('hidden')?a.removeAttribute('hidden'):a.setAttribute('hidden','hidden'));langselect.onkeydown=e=>({Delete:1,Backspace:1})[e.key]&&(_replaceElement(langselect,document.createElement('input'),['name','id','placeholder']),langselect.focus())";
+        var hookunfold = _ => document.body.appendChild(document.createElement('script')).textContent = "var keymap={'/':_=>!(inputquery.focus(),inputquery.select()),'?':_=>open(location),Escape:_=>resultpage.querySelector('section:not([hidden])').previousSibling.focus(),j:f=>f&&scrollBy(0,72),k:f=>f&&scrollBy(0,-72),f:f=>f&&scrollBy(0,innerHeight),b:f=>f&&scrollBy(0,-innerHeight),d:f=>f&&scrollBy(0,innerHeight/2),u:f=>f&&scrollBy(0,-innerHeight/2),g:f=>f&&scroll(0,0),G:f=>f&&scroll(0,742945),_cursectit:_=>{var t=document.activeElement;if('#'!=t.getAttribute('href')){while(t&&'SECTION'!=t.tagName)t=t.parentNode;t=(t||resultpage.querySelector('section')).previousSibling}return t},'*':_=>(keymap._cursectit().nextSibling.nextSibling||resultpage.firstChild).focus(),'#':_=>(keymap._cursectit().previousSibling||resultpage.lastChild).previousSibling.focus(),z:f=>f&&document.activeElement.scrollIntoView({block:'center'}),t:f=>f&&document.activeElement.scrollIntoView()};document.body.onkeydown=e=>keymap[e.key]&&keymap[e.key](inputquery!=e.target&&langselect!=e.target)?e.preventDefault():0;for(let a of resultpage.querySelectorAll('section'))a.previousSibling.onclick=e=>(e.preventDefault(),a.hasAttribute('hidden')?a.removeAttribute('hidden'):a.setAttribute('hidden','hidden'));langselect.onkeydown=e=>({Delete:1,Backspace:1})[e.key]&&(_replaceElement(langselect,document.createElement('input'),['name','id','placeholder']),langselect.onkeydown=langselect.focus())";
         if (base) {
           resultpage.textContent = inputquery.value = word;
+          inputquery.select();
           document.title = word+' - '+document.title;
           fetch(base+'&prop=sections')
             .then(r => r.json())
@@ -127,6 +128,7 @@
                         .slice(r.parse.text['*'].indexOf('>')+1, r.parse.text['*'].lastIndexOf('<'))
                         // fix the links
                         .replace(/href="\/wiki\/([-\w%]+)#([-\w%]+)"/g, 'href="?q=$1&s=$2"')
+                        .replace(/href="\/wiki\/([-\w%]+)"/g, 'href="?q=$1&s=English"')
                         .replace(/href="\/wiki\/([^"]+)"/g, 'href="https://en.wiktionary.org/wiki/$1"');
                       // remove unwanted
                       for (var a of wip.querySelectorAll('style,.mw-editsection,.mw-empty-elt')) a.remove();
@@ -196,7 +198,7 @@
         } else hookunfold(s.value = lang || '');
       })();</script>
       <button type="submit">Search</button>
-      <button type="button" id="themeswitch" title="v11" onclick="document.body.setAttribute('class', (localStorage.setItem('theme', 'light' == document.body.getAttribute('class') ? 'dark' : 'light'), localStorage.getItem('theme')))">&#9788;</button>
+      <button type="button" id="themeswitch" title="v12" onclick="document.body.setAttribute('class', (localStorage.setItem('theme', 'light' == document.body.getAttribute('class') ? 'dark' : 'light'), localStorage.getItem('theme')))">&#9788;</button>
     </form>
   </body>
 </html>
