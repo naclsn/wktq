@@ -93,8 +93,8 @@
             });
         var params = new URLSearchParams(location.search)
           , word = params.get('q')
-          , base = word && 'https://en.wiktionary.org/w/api.php?origin=*&action=parse&format=json&page='+encodeURIComponent(word)
           , lang = params.get('s')
+          , base = word && (-1 != (params = word.indexOf('#')) && (lang = word.slice(params+1), word = word.slice(0, params)), 'https://en.wiktionary.org/w/api.php?origin=*&action=parse&format=json&page='+encodeURIComponent(word))
           , skey = word+'#'+lang
           , s = document.createElement(base ? 'select' : 'input');
         s.setAttribute('name', 's');
@@ -132,6 +132,7 @@
                         .replace(/href="\/wiki\/([^"]+)"/g, 'href="https://en.wiktionary.org/wiki/$1"');
                       // remove unwanted
                       for (var a of wip.querySelectorAll('style,.mw-editsection,.mw-empty-elt')) a.remove();
+                      for (var a of wip.querySelectorAll('.mw-heading')) _replaceElement(a, a.firstChild);
                       for (var a of wip.querySelectorAll('*[class],*:not(span)[style]')) if ('AUDIO' != a.nodeName) {
                         var ls = [];
                         for (var n of a.attributes) if (-1 == ['rowspan', 'colspan', 'title'].indexOf(n.name)) ls.push(n.name);
@@ -139,15 +140,12 @@
                       }
                       // remove until first h3
                       var it = wip.firstChild;
-                      while ('H3' != it.nodeName) {
+                      while (it && 'H3' != it.nodeName) {
                         var nx = it.nextSibling;
                         it.remove();
                         it = nx;
                       }
                       while (it) {
-                        // only keep actual title text
-                        it.appendChild(it.firstChild.firstChild);
-                        it.firstChild.remove();
                         // add section after h3
                         let fl = it.insertAdjacentElement('afterend', document.createElement('section'));
                         // put h3 in a
@@ -198,7 +196,7 @@
         } else hookunfold(s.value = lang || '');
       })();</script>
       <button type="submit">Search</button>
-      <button type="button" id="themeswitch" title="v12" onclick="document.body.setAttribute('class', (localStorage.setItem('theme', 'light' == document.body.getAttribute('class') ? 'dark' : 'light'), localStorage.getItem('theme')))">&#9788;</button>
+      <button type="button" id="themeswitch" title="v13" onclick="document.body.setAttribute('class', (localStorage.setItem('theme', 'light' == document.body.getAttribute('class') ? 'dark' : 'light'), localStorage.getItem('theme')))">&#9788;</button>
     </form>
   </body>
 </html>
